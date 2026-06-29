@@ -31,12 +31,12 @@ export const WelcomeSection: React.FC = () => {
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-gray-100 mb-4">
-          Recueil préalable d'informations
+        <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-gray-100 mb-2">
+          TSA DATA
         </h1>
 
         <p className="text-center text-lg text-gray-600 dark:text-gray-400 mb-8">
-          Centre Médico-Psychologique - Évaluation TSA Adulte
+          Logiciel de recueil d'informations
         </p>
 
         <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 mb-8">
