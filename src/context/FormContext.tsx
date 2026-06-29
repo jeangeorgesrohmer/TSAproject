@@ -5,6 +5,7 @@ import { FormData } from '../types/form';
 interface FormContextType {
   formData: Partial<FormData>;
   updateFormData: (section: keyof FormData, data: any) => void;
+  importFormData: (data: Partial<FormData>) => void;
   currentStep: number;
   setCurrentStep: (step: number) => void;
   totalSteps: number;
@@ -88,6 +89,13 @@ export const FormProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   }, []);
 
+  const importFormData = useCallback((data: Partial<FormData>) => {
+    setFormData(data);
+    store.setItem(STORAGE_KEY, data).catch((err) => {
+      console.error('IndexedDB import error:', err);
+    });
+  }, []);
+
   const resetForm = useCallback(() => {
     setFormData(initialFormData);
     setCurrentStep(0);
@@ -106,6 +114,7 @@ export const FormProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       value={{
         formData,
         updateFormData,
+        importFormData,
         currentStep,
         setCurrentStep,
         totalSteps,

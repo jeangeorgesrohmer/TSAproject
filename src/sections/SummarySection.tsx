@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Download, AlertCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import { useFormContext } from '../context/FormContext';
 import { NavigationButtons } from '../components/NavigationButtons';
+import { DossierTransfert } from '../components/DossierTransfert';
 import { calculateAllScores, calculateGlobalScore } from '../utils/scoreCalculator';
 import { ScoreResult } from '../types/form';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Legend } from 'recharts';
@@ -266,6 +267,8 @@ export const SummarySection: React.FC = () => {
             </div>
           </div>
         )}
+
+        <DossierTransfert />
 
         <div className="flex gap-4 justify-between items-center">
           <div className="flex gap-3">

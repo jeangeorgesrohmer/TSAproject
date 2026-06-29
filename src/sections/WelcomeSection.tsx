@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FileText } from 'lucide-react';
 import { Input } from '../components/FormFields';
 import { NavigationButtons } from '../components/NavigationButtons';
+import { DossierTransfert } from '../components/DossierTransfert';
 import { useFormContext } from '../context/FormContext';
 import { IdentificationData } from '../types/form';
 
@@ -119,6 +120,8 @@ export const WelcomeSection: React.FC = () => {
         </div>
 
         <NavigationButtons showPrevious={false} nextLabel="Commencer" />
+
+        <DossierTransfert goToSummaryOnImport />
       </div>
     </div>
   );
