@@ -36,10 +36,41 @@ export const Stepper: React.FC = () => {
     }
   };
 
+  const progressPct = (currentStep / (steps.length - 1)) * 100;
+  const currentLabel = steps[currentStep]?.label ?? '';
+
   return (
     <div className="w-full bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between overflow-x-auto">
+
+      {/* ── Mobile compact header (< sm) ─────────────────────────────── */}
+      <div className="sm:hidden">
+        <div className="flex items-center justify-between px-4 py-3">
+          <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 tabular-nums">
+            {currentStep + 1}&thinsp;/&thinsp;{steps.length}
+          </span>
+          <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 truncate mx-3">
+            {currentLabel}
+          </span>
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500 tabular-nums">
+            {Math.round(progressPct)}%
+          </span>
+        </div>
+        <div className="h-1.5 bg-gray-200 dark:bg-gray-700">
+          <div
+            className="h-full bg-gradient-to-r from-blue-600 to-green-500 transition-all duration-500"
+            style={{ width: `${progressPct}%` }}
+            role="progressbar"
+            aria-valuenow={currentStep}
+            aria-valuemin={0}
+            aria-valuemax={steps.length - 1}
+            aria-label="Progression du questionnaire"
+          />
+        </div>
+      </div>
+
+      {/* ── Tablet / Desktop full stepper (sm+) ──────────────────────── */}
+      <div className="hidden sm:block max-w-7xl mx-auto px-4 py-4">
+        <div className="flex items-center justify-between overflow-x-auto pb-1">
           {steps.map((step, index) => {
             const isActive = currentStep === step.id;
             const isCompleted = currentStep > step.id;
@@ -50,14 +81,14 @@ export const Stepper: React.FC = () => {
                 <button
                   onClick={() => handleStepClick(step.id)}
                   disabled={!isAccessible}
-                  className={`flex flex-col items-center group transition-all ${
+                  className={`flex flex-col items-center flex-shrink-0 transition-all ${
                     isAccessible ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
                   }`}
                   aria-label={`Étape ${step.id + 1}: ${step.label}`}
                   aria-current={isActive ? 'step' : undefined}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+                    className={`w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${
                       isCompleted
                         ? 'bg-green-500 text-white'
                         : isActive
@@ -65,10 +96,10 @@ export const Stepper: React.FC = () => {
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     }`}
                   >
-                    {isCompleted ? <Check className="w-5 h-5" /> : step.id + 1}
+                    {isCompleted ? <Check className="w-4 h-4" /> : step.id + 1}
                   </div>
                   <span
-                    className={`mt-2 text-xs font-medium text-center hidden sm:block ${
+                    className={`mt-1.5 text-xs font-medium text-center max-w-[52px] leading-tight hidden md:block ${
                       isActive
                         ? 'text-blue-600 dark:text-blue-400'
                         : isCompleted
@@ -79,22 +110,24 @@ export const Stepper: React.FC = () => {
                     {step.shortLabel}
                   </span>
                 </button>
+
                 {index < steps.length - 1 && (
                   <div
-                    className={`flex-1 h-1 mx-2 transition-all ${
+                    className={`flex-1 h-0.5 mx-1 transition-all ${
                       isCompleted ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'
                     }`}
-                    style={{ minWidth: '20px', maxWidth: '60px' }}
+                    style={{ minWidth: 4, maxWidth: 32 }}
                   />
                 )}
               </React.Fragment>
             );
           })}
         </div>
-        <div className="mt-4 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+
+        <div className="mt-3 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-blue-600 to-green-500 transition-all duration-500"
-            style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+            style={{ width: `${progressPct}%` }}
             role="progressbar"
             aria-valuenow={currentStep}
             aria-valuemin={0}
@@ -103,6 +136,7 @@ export const Stepper: React.FC = () => {
           />
         </div>
       </div>
+
     </div>
   );
 };

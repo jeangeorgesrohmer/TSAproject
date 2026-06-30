@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1d4ed8"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.12)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="96" fill="url(#glow)"/>
+
+  <!-- Stylised brain — left hemisphere -->
+  <g fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M246,100 C188,100 140,135 132,178 C124,220 148,245 148,280 C148,315 172,335 210,340 L246,340"/>
+    <!-- cortex folds left -->
+    <path d="M155,155 C165,138 185,135 192,152"/>
+    <path d="M138,210 C152,195 170,197 172,218"/>
+    <path d="M148,265 C162,255 178,260 176,278"/>
+  </g>
+
+  <!-- Right hemisphere -->
+  <g fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M266,100 C324,100 372,135 380,178 C388,220 364,245 364,280 C364,315 340,335 302,340 L266,340"/>
+    <!-- cortex folds right -->
+    <path d="M357,155 C347,138 327,135 320,152"/>
+    <path d="M374,210 C360,195 342,197 340,218"/>
+    <path d="M364,265 C350,255 334,260 336,278"/>
+  </g>
+
+  <!-- Centre line -->
+  <line x1="256" y1="100" x2="256" y2="340" stroke="rgba(255,255,255,0.18)" stroke-width="5" stroke-dasharray="8 6"/>
+
+  <!-- Neural nodes -->
+  <circle cx="170" cy="165" r="9" fill="rgba(147,197,253,0.7)"/>
+  <circle cx="200" cy="135" r="6" fill="rgba(147,197,253,0.5)"/>
+  <circle cx="175" cy="222" r="7" fill="rgba(147,197,253,0.55)"/>
+  <circle cx="342" cy="165" r="9" fill="rgba(147,197,253,0.7)"/>
+  <circle cx="312" cy="135" r="6" fill="rgba(147,197,253,0.5)"/>
+  <circle cx="337" cy="222" r="7" fill="rgba(147,197,253,0.55)"/>
+  <circle cx="256" cy="110" r="7" fill="rgba(147,197,253,0.65)"/>
+
+  <!-- Connecting lines between nodes -->
+  <g stroke="rgba(147,197,253,0.25)" stroke-width="2">
+    <line x1="170" y1="165" x2="200" y2="135"/>
+    <line x1="170" y1="165" x2="175" y2="222"/>
+    <line x1="200" y1="135" x2="256" y2="110"/>
+    <line x1="342" y1="165" x2="312" y2="135"/>
+    <line x1="342" y1="165" x2="337" y2="222"/>
+    <line x1="312" y1="135" x2="256" y2="110"/>
+  </g>
+
+  <!-- TSA -->
+  <text x="256" y="390"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif"
+    font-weight="900"
+    font-size="148"
+    fill="white"
+    text-anchor="middle">TSA</text>
+
+  <!-- DATA -->
+  <text x="256" y="452"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif"
+    font-weight="300"
+    font-size="54"
+    fill="rgba(147,197,253,0.85)"
+    text-anchor="middle"
+    letter-spacing="10">DATA</text>
+</svg>

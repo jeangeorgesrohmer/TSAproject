@@ -413,6 +413,86 @@ export const calculateAllScores = (formData: Partial<FormData>): ScoreResult[] =
   });
 };
 
+export interface MaskingResult {
+  value: number;
+  label: string;
+  clinicalNote: string;
+  explicitScore: number;
+  deltaScore: number;
+}
+
+const maskingFreqToScore = (freq?: string): number => {
+  switch (freq) {
+    case 'tout le temps': return 3;
+    case 'souvent': return 2;
+    case 'parfois': return 1;
+    default: return 0;
+  }
+};
+
+export const calculateMaskingIndex = (formData: Partial<FormData>): MaskingResult => {
+  const social = formData.social;
+
+  // Explicit masking questions: 4 items × max 3 = 12
+  const explicitRaw =
+    maskingFreqToScore(social?.maskingImiter) +
+    maskingFreqToScore(social?.maskingCopier) +
+    maskingFreqToScore(social?.maskingPreparer) +
+    maskingFreqToScore(social?.maskingRole);
+  const explicitScore = Math.round((explicitRaw / 12) * 100);
+
+  // Delta: drop in Social + Communication + Anxiété Sociale from Enfance→Actuel is a compensation signal
+  const scores = calculateAllScores(formData);
+  const relevantDomains = ['Social', 'Communication', 'Anxiété Sociale'];
+  let totalDrop = 0;
+  let counted = 0;
+  for (const s of scores) {
+    if (relevantDomains.includes(s.domain) && s.maxScoreEnfance > 0 && s.maxScoreActuel > 0) {
+      const ePct = (s.enfanceScore / s.maxScoreEnfance) * 100;
+      const aPct = (s.actuelScore / s.maxScoreActuel) * 100;
+      totalDrop += Math.max(0, ePct - aPct);
+      counted++;
+    }
+  }
+  const deltaScore = counted > 0 ? Math.min(Math.round(totalDrop / counted), 100) : 0;
+
+  // Contextual bonuses
+  const epuisementBonus = social?.epuisementSocial ? 8 : 0;
+  const impactBonus = Math.min((social?.impactMasking?.length ?? 0) * 4, 12);
+
+  const value = Math.min(
+    Math.round(explicitScore * 0.6 + deltaScore * 0.4 + epuisementBonus + impactBonus),
+    100
+  );
+
+  let label: string;
+  let clinicalNote: string;
+
+  if (value <= 20) {
+    label = 'Symptomatologie brute sans masquage apparent';
+    clinicalNote =
+      "Les difficultés déclarées en enfance et à l'âge adulte semblent cohérentes. Peu de stratégies de camouflage conscientes ou inconscientes identifiées. La symptomatologie rapportée pourrait refléter la présentation authentique.";
+  } else if (value <= 40) {
+    label = 'Compensation légère';
+    clinicalNote =
+      "Quelques stratégies d'adaptation ont été identifiées. La personne met en place certains mécanismes de compensation mais ceux-ci ne semblent pas conduire à un épuisement majeur.";
+  } else if (value <= 65) {
+    label = 'Compensation modérée';
+    clinicalNote =
+      "Un niveau modéré de masquage est identifié. La personne développe des stratégies actives pour dissimuler ses difficultés, ce qui peut entraîner une fatigue cognitive et sociale significative. Explorer les mécanismes de récupération.";
+  } else if (value <= 80) {
+    label = 'Compensation forte';
+    clinicalNote =
+      "Le niveau de masquage est élevé. La personne investit des ressources importantes pour paraître neurotypique. Un épuisement chronique (burnout autistique) est à évaluer lors de la consultation clinique.";
+  } else {
+    label = 'Masquage intensif — épuisement probable';
+    clinicalNote =
+      "Indice de masquage très élevé. La personne déploie des efforts considérables pour compenser ses difficultés autistiques. Risque élevé d'épuisement social et de burnout autistique. Vigilance clinique accrue recommandée.";
+  }
+
+  return { value, label, clinicalNote, explicitScore, deltaScore };
+};
+
 export const calculateGlobalScore = (scores: ScoreResult[]): number => {
   const totalScore = scores.reduce(
     (sum, score) => sum + Math.max(score.enfanceScore, score.actuelScore),
