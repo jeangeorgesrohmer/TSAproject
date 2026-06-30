@@ -477,7 +477,16 @@ const PDFDocument = ({
       {/* Scores page */}
       {includeScores && <ScoresPage scores={scores} globalScore={globalScore} masking={masking} patientName={patientName} />}
 
-      {/* Conclusion */}
+      {/* Clinical conclusion — only if the clinician filled it in */}
+      {(data.clinicalConclusion?.trim()) && (
+        <ClinicalConclusionPage
+          clinicalConclusion={data.clinicalConclusion}
+          clinicalNotes={data.clinicalNotes}
+          patientName={patientName}
+        />
+      )}
+
+      {/* Standard conclusion */}
       <Page size="A4" style={s.page}>
         <View style={s.section}>
           <Text style={s.sectionTitle}>Conclusion</Text>
@@ -502,6 +511,86 @@ const PDFDocument = ({
         <Text style={s.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
       </Page>
     </Document>
+  );
+};
+
+// ─── Clinical conclusion page ─────────────────────────────────────────────────
+const ClinicalConclusionPage = ({
+  clinicalConclusion,
+  clinicalNotes,
+  patientName,
+}: {
+  clinicalConclusion: string;
+  clinicalNotes?: string;
+  patientName?: string;
+}) => {
+  const paragraphs = clinicalConclusion.split('\n');
+
+  return (
+    <Page size="A4" style={s.page}>
+      <View style={s.header}>
+        <Text style={s.title}>Conclusion Clinique et Orientations</Text>
+        {patientName ? <Text style={s.subtitle}>Patient : {patientName}</Text> : null}
+        <Text style={s.confidential}>
+          Document réservé au professionnel de santé — à valider avant tout usage officiel
+        </Text>
+      </View>
+
+      {/* Main conclusion block */}
+      <View style={{
+        padding: 14,
+        backgroundColor: '#f8fafc',
+        borderLeftWidth: 4,
+        borderLeftStyle: 'solid',
+        borderLeftColor: C.accent,
+        borderRadius: 4,
+        marginBottom: 16,
+      }}>
+        {paragraphs.map((line, i) => {
+          const trimmed = line.trim();
+          if (!trimmed) return <View key={i} style={{ marginBottom: 4 }} />;
+          // Section headers (ALL CAPS lines)
+          if (trimmed === trimmed.toUpperCase() && trimmed.length > 3 && !trimmed.startsWith('—') && !trimmed.startsWith('•')) {
+            return (
+              <Text key={i} style={{ fontSize: 10, fontWeight: 'bold', color: C.accent, marginTop: 8, marginBottom: 3 }}>
+                {trimmed}
+              </Text>
+            );
+          }
+          return (
+            <Text key={i} style={{ fontSize: 9, color: '#374151', marginBottom: 3, lineHeight: 1.5 }}>
+              {trimmed}
+            </Text>
+          );
+        })}
+      </View>
+
+      {/* Clinical notes block */}
+      {clinicalNotes && clinicalNotes.trim() && (
+        <View style={{ marginBottom: 14 }}>
+          <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#374151', marginBottom: 6 }}>
+            Notes cliniques libres
+          </Text>
+          <View style={{
+            padding: 10,
+            backgroundColor: '#fefce8',
+            borderWidth: 1,
+            borderStyle: 'solid',
+            borderColor: '#fde68a',
+            borderRadius: 4,
+          }}>
+            {clinicalNotes.split('\n').map((line, i) => (
+              line.trim()
+                ? <Text key={i} style={{ fontSize: 9, color: '#374151', marginBottom: 2, lineHeight: 1.5 }}>{line.trim()}</Text>
+                : <View key={i} style={{ marginBottom: 3 }} />
+            ))}
+          </View>
+        </View>
+      )}
+
+      <View style={s.footer}><Text>TSA DATA — Conclusion Clinique — Document confidentiel</Text></View>
+      <Text style={s.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+    </Page>
   );
 };
 
@@ -541,6 +630,13 @@ export const generateScoresPDF = async (data: Partial<FormData>) => {
   await download(
     <Document>
       <ScoresPage scores={scores} globalScore={globalScore} masking={masking} patientName={patientName} />
+      {data.clinicalConclusion?.trim() && (
+        <ClinicalConclusionPage
+          clinicalConclusion={data.clinicalConclusion}
+          clinicalNotes={data.clinicalNotes}
+          patientName={patientName}
+        />
+      )}
     </Document>,
     `Scores_TSA_${nom}_${date}.pdf`
   );

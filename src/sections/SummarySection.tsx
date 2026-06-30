@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { Download, AlertCircle, EyeOff, TrendingDown, TrendingUp } from 'lucide-react';
+import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import { Download, AlertCircle, EyeOff, TrendingDown, TrendingUp, FileText, Wand2, CheckCircle2, Info } from 'lucide-react';
 import { useFormContext } from '../context/FormContext';
 import { NavigationButtons } from '../components/NavigationButtons';
 import { DossierTransfert } from '../components/DossierTransfert';
 import { calculateAllScores, calculateGlobalScore, calculateMaskingIndex } from '../utils/scoreCalculator';
 import { generatePDF, generateScoresPDF } from '../utils/pdfGenerator';
+import { generateClinicalDraft } from '../utils/clinicalDraftGenerator';
 import { ScoreResult } from '../types/form';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
@@ -114,13 +115,47 @@ const getDeltaIndicator = (score: ScoreResult) => {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const SummarySection: React.FC = () => {
-  const { formData } = useFormContext();
+  const { formData, updateFormData } = useFormContext();
   const [isGeneratingFull,   setIsGeneratingFull]   = useState(false);
   const [isGeneratingScores, setIsGeneratingScores] = useState(false);
+  const [isGeneratingDraft,  setIsGeneratingDraft]  = useState(false);
+  const [savedIndicator,     setSavedIndicator]     = useState(false);
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scores      = useMemo(() => calculateAllScores(formData),   [formData]);
   const globalScore = useMemo(() => calculateGlobalScore(scores),   [scores]);
   const masking     = useMemo(() => calculateMaskingIndex(formData), [formData]);
+
+  const clinicalConclusion = formData.clinicalConclusion ?? '';
+  const clinicalNotes      = formData.clinicalNotes      ?? '';
+
+  const handleConclusionChange = useCallback((val: string) => {
+    updateFormData('clinicalConclusion', val);
+    setSavedIndicator(false);
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(() => setSavedIndicator(true), 800);
+  }, [updateFormData]);
+
+  const handleNotesChange = useCallback((val: string) => {
+    updateFormData('clinicalNotes', val);
+    setSavedIndicator(false);
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(() => setSavedIndicator(true), 800);
+  }, [updateFormData]);
+
+  // Clear timer on unmount
+  useEffect(() => () => { if (autosaveTimer.current) clearTimeout(autosaveTimer.current); }, []);
+
+  const handleGenerateDraft = () => {
+    setIsGeneratingDraft(true);
+    try {
+      const draft = generateClinicalDraft(formData, scores, masking);
+      updateFormData('clinicalConclusion', draft);
+      setSavedIndicator(true);
+    } finally {
+      setIsGeneratingDraft(false);
+    }
+  };
 
   const radarData = scores.map((s) => ({
     domain:  s.domain,
@@ -402,6 +437,83 @@ export const SummarySection: React.FC = () => {
         )}
 
         <DossierTransfert />
+
+        {/* ── Espace de Rédaction Clinique ────────────────────────────── */}
+        <div className="mt-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-slate-50 dark:bg-gray-900/50">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center flex-shrink-0">
+                <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-gray-900 dark:text-white">
+                  Espace de Rédaction Clinique
+                </h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Réservé au professionnel de santé — sauvegarde automatique
+                </p>
+              </div>
+            </div>
+            {savedIndicator && (
+              <span className="inline-flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Enregistré
+              </span>
+            )}
+          </div>
+
+          <div className="px-6 py-5 space-y-5">
+            {/* Generate button + disclaimer */}
+            <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+              <button
+                type="button"
+                onClick={handleGenerateDraft}
+                disabled={isGeneratingDraft}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors flex-shrink-0"
+              >
+                <Wand2 className="w-4 h-4" />
+                {isGeneratingDraft ? 'Génération…' : 'Générer une trame automatique'}
+              </button>
+              <div className="flex gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>
+                  <strong>Avertissement clinique :</strong> cette trame est générée automatiquement à partir des données du questionnaire. Elle ne constitue pas un avis diagnostique et doit être relue, complétée et validée par un clinicien qualifié avant tout usage officiel.
+                </span>
+              </div>
+            </div>
+
+            {/* Conclusion textarea */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                Conclusion clinique et orientations
+              </label>
+              <textarea
+                value={clinicalConclusion}
+                onChange={(e) => handleConclusionChange(e.target.value)}
+                placeholder="Rédigez ici la conclusion clinique, les hypothèses diagnostiques et les orientations proposées…"
+                rows={14}
+                className="w-full px-4 py-3 text-sm leading-relaxed border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y transition-all font-mono"
+                style={{ fontFamily: 'ui-monospace, "Cascadia Mono", "Segoe UI Mono", monospace', fontSize: '13px' }}
+              />
+            </div>
+
+            {/* Notes libres */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                Notes cliniques libres
+              </label>
+              <textarea
+                value={clinicalNotes}
+                onChange={(e) => handleNotesChange(e.target.value)}
+                placeholder="Observations complémentaires, éléments contextuels, points à approfondir en entretien…"
+                rows={6}
+                className="w-full px-4 py-3 text-sm leading-relaxed border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y transition-all"
+                style={{ fontSize: '13px' }}
+              />
+            </div>
+          </div>
+        </div>
 
         {/* ── Actions ─────────────────────────────────────────────────── */}
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">

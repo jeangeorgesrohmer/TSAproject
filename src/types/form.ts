@@ -540,6 +540,8 @@ export interface FormData {
   relationship: RelationshipData;
   administrative: AdministrativeData;
   currentSituation: CurrentSituationData;
+  clinicalConclusion?: string;
+  clinicalNotes?: string;
 }
 
 export interface ScoreResult {
